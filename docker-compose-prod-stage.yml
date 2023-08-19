@@ -6,12 +6,16 @@ services:
         restart: unless-stopped
         build:
             context: .
-            dockerfile: ${ROOT_FRONTEND}/Dockerfile
+            dockerfile: ./docker/frontend/dev/Dockerfile
         ports:
             - 80:80
         volumes:
             - static_volume:/app/backend/static
-            - ${ROOT_FRONTEND}/nginx-conf:/etc/nginx/conf.d
+            - ./docker/frontend/dev/nginx-conf:/etc/nginx/conf.d
+        deploy:
+            placement:
+                constraints: 
+                  - "node.role==manager"
         depends_on: 
             - backend
 
@@ -20,12 +24,16 @@ services:
         restart: unless-stopped
         build:
             context: .
-            dockerfile: ${ROOT_BACKEND}/Dockerfile 
+            dockerfile: ./docker/backend/prod/Dockerfile 
         command: gunicorn messenger_project.wsgi --bind 0.0.0.0:8000 #--workers 4 --threads 4
         expose:
             - 8000
+        deploy:
+            placement:
+                constraints:
+                  - "node.role==worker"
         env_file:
-            - ${ROOT_BACKEND}/.env
+            - ./docker/backend/prod/.env
         depends_on:
             - db
 
@@ -34,7 +42,7 @@ services:
         volumes:
         - postgres_data:/var/lib/postgresql/data/
         env_file:
-        - ${ROOT_DB}/.env
+        - ./docker/db/prod/.env
 
 volumes:
     static_volume:
