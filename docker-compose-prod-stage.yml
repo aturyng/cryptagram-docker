@@ -1,42 +1,41 @@
 version: '3.8'
 
 services:
-    nginx: 
+    frontend: 
         image: aturyng/cryptagram-frontend:latest
         restart: unless-stopped
         build:
             context: .
-            dockerfile: ./docker/nginx/Dockerfile
+            dockerfile: ${ROOT_FRONTEND}/Dockerfile
         ports:
             - 80:80
         volumes:
             - static_volume:/app/backend/static
-            - ./docker/nginx/development:/etc/nginx/conf.d
+            - ${ROOT_FRONTEND}/nginx-conf:/etc/nginx/conf.d
         depends_on: 
             - backend
+
     backend:
         image: aturyng/cryptagram-backend:latest
         restart: unless-stopped
         build:
             context: .
-            dockerfile: ./docker/backend/Dockerfile 
-        entrypoint: /app/docker/backend/wsgi-entrypoint.sh
-        volumes:
-            - .:/app
-            - static_volume:/app/backend/static
+            dockerfile: ${ROOT_BACKEND}/Dockerfile 
+        command: gunicorn messenger_project.wsgi --bind 0.0.0.0:8000 #--workers 4 --threads 4
         expose:
-            - 8000        
+            - 8000
+        env_file:
+            - ${ROOT_BACKEND}/.env
         depends_on:
             - db
+
     db:
         image: postgres:15.3
         volumes:
         - postgres_data:/var/lib/postgresql/data/
-        environment:
-        - POSTGRES_HOST_AUTH_METHOD=trust
-        - POSTGRES_PASSWORD=postgres
-        - POSTGRES_USER=postgres
+        env_file:
+        - ${ROOT_DB}/.env
 
 volumes:
-    static_volume: {}
+    static_volume:
     postgres_data:
