@@ -9,27 +9,12 @@ services:
             dockerfile: ./docker/frontend/prod/Dockerfile
         ports:
             - 80:80
-            - 443:443
         volumes:
             - static_volume:/app/backend/static
-            - ./docker/frontend/prod/nginx-conf:/etc/nginx/conf.d
-            - ./docker/frontend/prod/certbot/conf:/etc/letsencrypt
-            - ./docker/frontend/prod/certbot/www:/var/www/certbot
-        deploy:
-            placement:
-                constraints: 
-                  - "node.role==manager"
-        command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+            - ./docker/frontend/dev/nginx-conf:/etc/nginx/conf.d
         depends_on: 
             - backend
-
-    certbot:
-        image: certbot/certbot
-        restart: unless-stopped
-        volumes:
-            - ./docker/frontend/prod/certbot/conf:/etc/letsencrypt
-            - ./docker/frontend/prod/certbot/www:/var/www/certbot
-        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+            - redis
 
     backend:
         image: aturyng/cryptagram-backend:latest
@@ -45,17 +30,18 @@ services:
                 constraints:
                   - "node.role==worker"
         env_file:
-            - ./docker/backend/prod/.env
+            - ./docker/backend/dev/.env
         depends_on:
             - db
 
     db:
         image: postgres:15.3
+        ports:
+            - 5432:5432
         volumes:
         - postgres_data:/var/lib/postgresql/data/
         env_file:
-        - ./docker/db/prod/.env
-
+        - ./docker/db/dev/.env
 
     redis:
       image: redis:alpine
@@ -67,7 +53,7 @@ services:
           dockerfile: ./docker/backend/prod/Dockerfile 
       command: celery -A messenger_project worker -l info
       env_file:
-        - ./docker/celery/prod/.env
+        - ./docker/celery/dev/.env
       depends_on:
         - redis
 
@@ -76,9 +62,9 @@ services:
       build:
           context: .
           dockerfile: ./docker/backend/prod/Dockerfile 
-      command: celery -A messenger_project beat -l info
+      command: celery -A messenger_project beat -l info #--scheduler django_celery_beat.schedulers:DatabaseScheduler
       env_file:
-        - ./docker/celery-beat/prod/.env
+        - ./docker/celery-beat/dev/.env
       depends_on:
         - redis
 
