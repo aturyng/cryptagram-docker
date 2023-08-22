@@ -5,11 +5,11 @@ if ! [ -x "$(command -v docker compose)" ]; then
   exit 1
 fi
 
-domains=(ec2-16-171-162-226.eu-north-1.compute.amazonaws.com)
+domains=(cryptagram.eu)
 rsa_key_size=4096
 data_path="./docker/frontend/prod/certbot"
 email="turyng@proton.me"
-staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
+staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then
   read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision
@@ -77,4 +77,4 @@ docker compose -f docker-compose-prod-stage.yml run --rm --entrypoint "\
 echo
 
 echo "### Reloading nginx ..."
-docker compose -f  docker-compose-prod-stage.yml exec nginx frontend -s reload
+docker compose -f  docker-compose-prod-stage.yml exec frontend nginx -s reload
