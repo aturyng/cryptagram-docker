@@ -66,6 +66,11 @@ COPY ./backend $APP_HOME
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
+# setup logger
+RUN mkdir -p $APP_HOME/logs
+RUN touch $APP_HOME/logs/django.log
+RUN chown -R app:app $APP_HOME/logs
+
 # change to the app user
 USER app
 

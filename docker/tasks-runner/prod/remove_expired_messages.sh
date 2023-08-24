@@ -1,0 +1,1 @@
+curl -X DELETE backend:8000/api/tasks/delete-expired-messages

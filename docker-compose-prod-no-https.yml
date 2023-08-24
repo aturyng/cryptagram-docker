@@ -14,10 +14,10 @@ services:
             - ./docker/frontend/dev/nginx-conf:/etc/nginx/conf.d
         depends_on: 
             - backend
-            - redis
 
     backend:
         image: aturyng/cryptagram-backend:latest
+        container_name: cryptagram-backend-container
         restart: unless-stopped
         build:
             context: .
@@ -30,7 +30,7 @@ services:
                 constraints:
                   - "node.role==worker"
         env_file:
-            - ./docker/backend/dev/.env
+            - ./docker/backend/prod/.env
         depends_on:
             - db
 
@@ -41,32 +41,15 @@ services:
         volumes:
         - postgres_data:/var/lib/postgresql/data/
         env_file:
-        - ./docker/db/dev/.env
+        - ./docker/db/prod/.env
 
-    redis:
-      image: redis:alpine
-
-    celery:
-      image: aturyng/cryptagram-backend:latest
+    tasks-runner:
+      image: aturyng/cryptagram-tasks_runner:latest
       build:
-          context: .
-          dockerfile: ./docker/backend/prod/Dockerfile 
-      command: celery -A messenger_project worker -l info
-      env_file:
-        - ./docker/celery/dev/.env
+          context: ./docker/tasks-runner/prod
+      command: cron -f
       depends_on:
-        - redis
-
-    celery-beat:
-      image: aturyng/cryptagram-backend:latest
-      build:
-          context: .
-          dockerfile: ./docker/backend/prod/Dockerfile 
-      command: celery -A messenger_project beat -l info #--scheduler django_celery_beat.schedulers:DatabaseScheduler
-      env_file:
-        - ./docker/celery-beat/dev/.env
-      depends_on:
-        - redis
+        - backend
 
 volumes:
     static_volume:
