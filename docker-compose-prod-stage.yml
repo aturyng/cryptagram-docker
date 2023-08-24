@@ -56,31 +56,13 @@ services:
         env_file:
         - ./docker/db/prod/.env
 
-
-    redis:
-      image: redis:alpine
-
-    celery:
-      image: aturyng/cryptagram-backend:latest
+    tasks-runner:
+      image: aturyng/cryptagram-tasks_runner:latest
       build:
-          context: .
-          dockerfile: ./docker/backend/prod/Dockerfile 
-      command: celery -A messenger_project worker -l info
-      env_file:
-        - ./docker/celery/prod/.env
+          context: ./docker/tasks-runner/prod
+      command: cron -f
       depends_on:
-        - redis
-
-    celery-beat:
-      image: aturyng/cryptagram-backend:latest
-      build:
-          context: .
-          dockerfile: ./docker/backend/prod/Dockerfile 
-      command: celery -A messenger_project beat -l info
-      env_file:
-        - ./docker/celery-beat/prod/.env
-      depends_on:
-        - redis
+        - backend
 
 volumes:
     static_volume:
