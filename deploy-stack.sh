@@ -1,1 +1,1 @@
-docker stack deploy cryptagram-stack
+docker stack deploy -c docker-compose.yml cryptagram-stack

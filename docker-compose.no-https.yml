@@ -3,7 +3,7 @@ version: '3.8'
 services:
     frontend:
         extends:
-            file: docker-compose.base.yml
+            file: docker-compose.yml
             service: frontend
         ports:
             - 80:80
@@ -14,7 +14,7 @@ services:
 
     backend:
         extends:
-            file: docker-compose.base.yml
+            file: docker-compose.yml
             service: backend
         env_file:
             - ./docker/backend/dev/.env
@@ -23,14 +23,14 @@ services:
 
     db:
         extends:
-            file: docker-compose.base.yml
+            file: docker-compose.yml
             service: db
         ports:
             - 5432:5432
 
     tasks-runner:
         extends:
-            file: docker-compose.base.yml
+            file: docker-compose.yml
             service: tasks-runner
         depends_on:
             - backend

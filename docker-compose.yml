@@ -2,13 +2,16 @@ version: '3.8'
 
 services:
     frontend: 
-        extends:
-            file: docker-compose.base.yml
-            service: frontend
+        image: aturyng/cryptagram-frontend:latest
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./docker/frontend/prod/Dockerfile
         ports:
             - 80:80
             - 443:443
         volumes:
+            - static_volume:/app/backend/static
             - ./docker/frontend/prod/nginx-conf:/etc/nginx/conf.d
             - ./docker/frontend/prod/certbot/conf:/etc/letsencrypt
             - ./docker/frontend/prod/certbot/www:/var/www/certbot
@@ -31,9 +34,14 @@ services:
             - frontend
 
     backend:
-        extends:
-            file: docker-compose.base.yml
-            service: backend
+        image: aturyng/cryptagram-backend:latest
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./docker/backend/prod/Dockerfile 
+        command: gunicorn messenger_project.wsgi --bind 0.0.0.0:8000 #--workers 4 --threads 4
+        env_file:
+            - ./docker/backend/prod/.env
         deploy:
             placement:
                 constraints:
@@ -42,16 +50,19 @@ services:
             - db
 
     db:
-        extends:
-            file: docker-compose.base.yml
-            service: db
+        image: postgres:15.3
+        volumes:
+        - postgres_data:/var/lib/postgresql/data/
+        env_file:
+        - ./docker/db/prod/.env
 
     tasks-runner:
-        extends:
-            file: docker-compose.base.yml
-            service: tasks-runner
+        image: aturyng/cryptagram-tasks_runner:latest
+        build:
+            context: ./docker/tasks-runner/prod
+        command: cron -f
         depends_on:
-            - backend
+              - backend
 
 volumes:
     static_volume:
