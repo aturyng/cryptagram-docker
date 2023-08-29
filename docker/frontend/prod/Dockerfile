@@ -1,7 +1,7 @@
 
 # The first stage
 # Build React static files
-FROM node:20.4-alpine as builder
+FROM node:lts-slim as builder
 
 WORKDIR /app/frontend
 COPY ./frontend/package.json ./

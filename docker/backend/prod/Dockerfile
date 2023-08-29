@@ -3,7 +3,7 @@
 ###########
 
 # pull official base image
-FROM python:3.11.4-slim-buster as builder
+FROM python:3.11-slim-buster as builder
 
 # set work directory
 WORKDIR /usr/src/app
@@ -33,7 +33,7 @@ COPY ./backend /usr/src/app/
 #########
 
 # pull official base image
-FROM python:3.11.4-slim-buster
+FROM python:3.11-slim-buster
 
 # create directory for the app user
 RUN mkdir -p /home/app
