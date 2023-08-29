@@ -1,17 +1,14 @@
 
 # The first stage
 # Build React static files
-FROM node:20.4-alpine as builder
+FROM node:lts-slim
 
-WORKDIR /app/frontend
-COPY ./frontend/package.json ./
-COPY ./frontend/package-lock.json ./
-RUN npm ci --silent
-COPY ./frontend/ ./
-RUN npm run build
+# 'default_user' is used if non is provided
+#ARG UNAME=dockeruser
+#ARG UID=1000
+#ARG GID=1000
+#RUN groupadd -g $GID -o $UNAME
+#RUN useradd -m -u $UID -g $GID -o -s /bin/bash $UNAME
+#USER $UNAME
 
-# The second stage
-# Copy React static files and start nginx
-FROM nginx:stable-alpine
-COPY --from=builder /app/frontend/dist /usr/share/nginx/html
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app/scr

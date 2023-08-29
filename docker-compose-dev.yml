@@ -1,31 +1,39 @@
 version: '3.8'
 
 services:
-    nginx: 
+    frontend: 
         image: aturyng/cryptagram-frontend:latest
-        restart: unless-stopped
+        user: ${MY_UID}:${MY_GID}
         build:
             context: .
             dockerfile: ./docker/frontend/dev/Dockerfile
+            args:
+              - "UID=${UID:-1000}"
+              - "GID=${GID:-1000}"
+        stdin_open: true # docker run -i
+        tty: true        # docker run -t
         ports:
-            - 80:80
+            - 5173:5173
         volumes:
-            - static_volume:/app/backend/static
-            - ./docker/nginx/development:/etc/nginx/conf.d
+            - ./frontend:/app/scr
         depends_on: 
             - backend
     backend:
-        image: aturyng/cryptagram-backend:latest
-        restart: unless-stopped
+        user: ${MY_UID}:${MY_GID}
         build:
-            context: .
-            dockerfile: ./docker/backend/dev/Dockerfile 
-        entrypoint: /app/docker/backend/dev/entrypoint.sh
+            context: ./docker/backend/dev
+            args:
+              - "UID=${UID:-1000}"
+              - "GID=${GID:-1000}"
+        stdin_open: true # docker run -i
+        tty: true        # docker run -t
+        entrypoint: /app/config/entrypoint.sh
         volumes:
-            - .:/app
-            - static_volume:/app/backend/static
-        expose:
-            - 8000        
+            - ./backend:/app/src
+        ports:
+            - 8000:8000
+        env_file:
+            - ./docker/backend/dev/.env
         depends_on:
             - db
     db:
@@ -37,34 +45,5 @@ services:
         - POSTGRES_PASSWORD=postgres
         - POSTGRES_USER=postgres
 
-    redis:
-      image: redis:alpine
-
-    celery:
-      build: ./project
-      command: celery -A core worker -l info
-      volumes:
-        - ./backend/:/usr/src/app/
-      environment:
-        - DEBUG=1
-        - SECRET_KEY=dbaa1_i7%*3r9-=z-+_mz4r-!qeed@(-a_r(g@k8jo8y3r27%m
-        - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
-      depends_on:
-        - redis
-
-    celery-beat:
-      build: ./project
-      command: celery -A core beat -l info
-      volumes:
-        - ./backend/:/usr/src/app/
-      environment:
-        - DEBUG=1
-        - SECRET_KEY=dbaa1_i7%*3r9-=z-+_mz4r-!qeed@(-a_r(g@k8jo8y3r27%m
-        - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
-      depends_on:
-        - redis
-
 volumes:
-    static_volume:
     postgres_data:
-    celery_volume:
