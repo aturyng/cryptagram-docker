@@ -1,1 +1,1 @@
-docker stack deploy -c docker-compose-prod-stage.yml cryptagram-stack
+docker stack deploy cryptagram-stack

@@ -43,7 +43,7 @@ services:
         deploy:
             placement:
                 constraints:
-                  - "node.role==worker"
+                  - "node.role==manager"
         env_file:
             - ./docker/backend/prod/.env
         depends_on:

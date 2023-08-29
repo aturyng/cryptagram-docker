@@ -1,1 +1,0 @@
-docker compose -f docker-compose-prod-stage.yml --env-file .env.prod-stage up
