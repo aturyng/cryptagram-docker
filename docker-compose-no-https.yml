@@ -1,55 +1,39 @@
 version: '3.8'
 
 services:
-    frontend: 
-        image: aturyng/cryptagram-frontend:latest
-        restart: unless-stopped
-        build:
-            context: .
-            dockerfile: ./docker/frontend/prod/Dockerfile
+    frontend:
+        extends:
+            file: docker-compose.base.yml
+            service: frontend
         ports:
             - 80:80
         volumes:
-            - static_volume:/app/backend/static
             - ./docker/frontend/dev/nginx-conf:/etc/nginx/conf.d
         depends_on: 
             - backend
 
     backend:
-        image: aturyng/cryptagram-backend:latest
-        container_name: cryptagram-backend-container
-        restart: unless-stopped
-        build:
-            context: .
-            dockerfile: ./docker/backend/prod/Dockerfile 
-        command: gunicorn messenger_project.wsgi --bind 0.0.0.0:8000 #--workers 4 --threads 4
-        expose:
-            - 8000
-        deploy:
-            placement:
-                constraints:
-                  - "node.role==worker"
+        extends:
+            file: docker-compose.base.yml
+            service: backend
         env_file:
-            - ./docker/backend/prod/.env
+            - ./docker/backend/dev/.env
         depends_on:
             - db
 
     db:
-        image: postgres:15.3
+        extends:
+            file: docker-compose.base.yml
+            service: db
         ports:
             - 5432:5432
-        volumes:
-        - postgres_data:/var/lib/postgresql/data/
-        env_file:
-        - ./docker/db/prod/.env
 
     tasks-runner:
-      image: aturyng/cryptagram-tasks_runner:latest
-      build:
-          context: ./docker/tasks-runner/prod
-      command: cron -f
-      depends_on:
-        - backend
+        extends:
+            file: docker-compose.base.yml
+            service: tasks-runner
+        depends_on:
+            - backend
 
 volumes:
     static_volume:

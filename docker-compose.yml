@@ -2,16 +2,13 @@ version: '3.8'
 
 services:
     frontend: 
-        image: aturyng/cryptagram-frontend:latest
-        restart: unless-stopped
-        build:
-            context: .
-            dockerfile: ./docker/frontend/prod/Dockerfile
+        extends:
+            file: docker-compose.base.yml
+            service: frontend
         ports:
             - 80:80
             - 443:443
         volumes:
-            - static_volume:/app/backend/static
             - ./docker/frontend/prod/nginx-conf:/etc/nginx/conf.d
             - ./docker/frontend/prod/certbot/conf:/etc/letsencrypt
             - ./docker/frontend/prod/certbot/www:/var/www/certbot
@@ -30,39 +27,31 @@ services:
             - ./docker/frontend/prod/certbot/conf:/etc/letsencrypt
             - ./docker/frontend/prod/certbot/www:/var/www/certbot
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+        depends_on: 
+            - frontend
 
     backend:
-        image: aturyng/cryptagram-backend:latest
-        restart: unless-stopped
-        build:
-            context: .
-            dockerfile: ./docker/backend/prod/Dockerfile 
-        command: gunicorn messenger_project.wsgi --bind 0.0.0.0:8000 #--workers 4 --threads 4
-        expose:
-            - 8000
+        extends:
+            file: docker-compose.base.yml
+            service: backend
         deploy:
             placement:
                 constraints:
                   - "node.role==manager"
-        env_file:
-            - ./docker/backend/prod/.env
         depends_on:
             - db
 
     db:
-        image: postgres:15.3
-        volumes:
-        - postgres_data:/var/lib/postgresql/data/
-        env_file:
-        - ./docker/db/prod/.env
+        extends:
+            file: docker-compose.base.yml
+            service: db
 
     tasks-runner:
-      image: aturyng/cryptagram-tasks_runner:latest
-      build:
-          context: ./docker/tasks-runner/prod
-      command: cron -f
-      depends_on:
-        - backend
+        extends:
+            file: docker-compose.base.yml
+            service: tasks-runner
+        depends_on:
+            - backend
 
 volumes:
     static_volume:

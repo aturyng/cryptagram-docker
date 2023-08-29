@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+    frontend: 
+        image: aturyng/cryptagram-frontend:latest
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./docker/frontend/prod/Dockerfile
+        volumes:
+            - static_volume:/app/backend/static
+
+    backend:
+        image: aturyng/cryptagram-backend:latest
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./docker/backend/prod/Dockerfile 
+        expose:
+            - 8000
+        command: gunicorn messenger_project.wsgi --bind 0.0.0.0:8000 #--workers 4 --threads 4
+        env_file:
+            - ./docker/backend/prod/.env
+
+    db:
+        image: postgres:15.3
+        volumes:
+        - postgres_data:/var/lib/postgresql/data/
+        env_file:
+        - ./docker/db/prod/.env
+
+    tasks-runner:
+      image: aturyng/cryptagram-tasks_runner:latest
+      build:
+          context: ./docker/tasks-runner/prod
+      command: cron -f
